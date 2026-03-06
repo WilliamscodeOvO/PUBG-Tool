@@ -2,90 +2,100 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PUBG 战术测距仪</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 600px; background: #333; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { color: #f39c12; text-align: center; }
-        .input-group { margin: 15px 0; display: flex; justify-content: space-between; }
-        input { width: 45%; padding: 10px; border: none; border-radius: 5px; font-size: 16px; }
-        #result-box { background: #444; padding: 15px; border-left: 5px solid #f39c12; margin-top: 20px; }
-        .distance { font-size: 24px; font-weight: bold; color: #fff; }
-        .advice { margin-top: 10px; color: #bdc3c7; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; text-align: center; }
-        th, td { border: 1px solid #555; padding: 5px; }
-        th { background: #444; }
+        body { font-family: -apple-system, sans-serif; background: #1a1a1a; color: #eee; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 500px; background: #2c2c2c; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box; }
+        h2 { color: #f39c12; text-align: center; margin-bottom: 20px; font-size: 20px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        /* 关键优化：大尺寸输入框方便手机点击 */
+        input { width: 100%; padding: 15px; border: 2px solid #444; border-radius: 8px; font-size: 18px; background: #1a1a1a; color: #fff; text-align: center; }
+        input:focus { border-color: #f39c12; outline: none; }
+        
+        /* 清零按钮样式 */
+        .btn-clear { width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .btn-clear:active { background: #c0392b; }
+
+        #result-box { background: #3d3d3d; padding: 15px; border-left: 5px solid #f39c12; border-radius: 4px; }
+        .distance { font-size: 28px; font-weight: bold; color: #f1c40f; }
+        .advice { margin-top: 10px; color: #ecf0f1; line-height: 1.5; font-size: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 11px; text-align: center; color: #999; }
+        th, td { border: 1px solid #444; padding: 6px 2px; }
+        th { background: #333; color: #f39c12; }
+        .highlight { background: rgba(243, 156, 18, 0.1); color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🎯 PUBG 测距 & 归零建议</h2>
+    <h2>🎯 精确测距 & 归零</h2>
     
     <div class="input-group">
-        <input type="number" id="inputX" placeholder="横向格数 (X)" step="0.1" oninput="calculate()">
-        <input type="number" id="inputY" placeholder="纵向格数 (Y)" step="0.1" oninput="calculate()">
+        <input type="number" id="inputX" placeholder="横向 X" step="0.1" inputmode="decimal" oninput="calculate()">
+        <input type="number" id="inputY" placeholder="纵向 Y" step="0.1" inputmode="decimal" oninput="calculate()">
     </div>
+
+    <button class="btn-clear" onclick="clearAll()">清零数据</button>
 
     <div id="result-box">
         <div>直线距离: <span id="distOut" class="distance">-</span> 米</div>
-        <div id="zeroAdvice" class="advice">请输入格数开始计算...</div>
+        <div id="zeroAdvice" class="advice">输入地图格数获取建议...</div>
     </div>
 
-    <p style="text-align: center; font-size: 14px; margin-top: 20px;">7x7 距离速查表 (m)</p>
-    <table id="distTable"></table>
+    <table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
 </div>
 
 <script>
-    // 生成表格
-    const table = document.getElementById('distTable');
-    let header = '<tr><th>Y\\X</th>';
-    for(let x=1; x<=7; x++) header += `<th>${x}格</th>`;
-    table.innerHTML = header + '</tr>';
+    // 初始化速查表
+    const tHead = document.getElementById('tableHead');
+    const tBody = document.getElementById('tableBody');
+    let headHtml = '<tr><th>Y\\X</th>';
+    for(let x=1; x<=7; x++) headHtml += `<th>${x}</th>`;
+    tHead.innerHTML = headHtml + '</tr>';
     
     for(let y=1; y<=7; y++) {
-        let row = `<tr><td><b>${y}格</b></td>`;
+        let row = `<tr><td><strong>${y}</strong></td>`;
         for(let x=1; x<=7; x++) {
             let d = Math.round(Math.sqrt(x*x + y*y) * 100);
-            row += `<td>${d}</td>`;
+            let style = (x === y) ? 'class="highlight"' : '';
+            row += `<td ${style}>${d}</td>`;
         }
-        table.innerHTML += row + '</tr>';
+        tBody.innerHTML += row + '</tr>';
     }
 
-    // 计算逻辑
     function calculate() {
         const x = parseFloat(document.getElementById('inputX').value) || 0;
         const y = parseFloat(document.getElementById('inputY').value) || 0;
         const distOut = document.getElementById('distOut');
         const zeroAdvice = document.getElementById('zeroAdvice');
 
-        if (x === 0 && y === 0) {
-            distOut.innerText = "-";
-            zeroAdvice.innerText = "请输入格数...";
-            return;
-        }
+        if (x === 0 && y === 0) return;
 
         const dist = Math.sqrt(x*x + y*y) * 100;
         const finalDist = Math.round(dist);
         distOut.innerText = finalDist;
 
-        // 归零逻辑
+        // 归零算法
         let zeroValue = Math.round(finalDist / 100) * 100;
         if (zeroValue < 100) zeroValue = 100;
 
-        let aimAdvice = "";
-        const diff = finalDist - zeroValue;
+        let diff = finalDist - zeroValue;
+        let aimDirection = diff > 0 ? "略微抬高准星" : "略微压低准星";
+        if (Math.abs(diff) <= 5) aimDirection = "准星正对目标";
 
-        if (Math.abs(diff) < 5) {
-            aimAdvice = "准星**正对**目标。";
-        } else if (diff > 0) {
-            aimAdvice = `由于实际距离比归零远 ${diff}m，准星应略微朝上偏。`;
-        } else {
-            aimAdvice = `由于实际距离比归零近 ${Math.abs(diff)}m，准星应略微朝下偏。`;
-        }
+        zeroAdvice.innerHTML = `
+            推荐归零: <strong style="color:#f39c12">${zeroValue}m</strong><br>
+            修正提示: 偏差 ${Math.abs(diff)}m，<strong>${aimDirection}</strong>
+        `;
+    }
 
-        zeroAdvice.innerHTML = `推荐归零: <strong>${zeroValue}m</strong><br>${aimAdvice}`;
+    function clearAll() {
+        document.getElementById('inputX').value = '';
+        document.getElementById('inputY').value = '';
+        document.getElementById('distOut').innerText = '-';
+        document.getElementById('zeroAdvice').innerText = '输入地图格数获取建议...';
     }
 </script>
 
