@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUBG 战术测距仪</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 600px; background: #333; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { color: #f39c12; text-align: center; }
+        .input-group { margin: 15px 0; display: flex; justify-content: space-between; }
+        input { width: 45%; padding: 10px; border: none; border-radius: 5px; font-size: 16px; }
+        #result-box { background: #444; padding: 15px; border-left: 5px solid #f39c12; margin-top: 20px; }
+        .distance { font-size: 24px; font-weight: bold; color: #fff; }
+        .advice { margin-top: 10px; color: #bdc3c7; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; text-align: center; }
+        th, td { border: 1px solid #555; padding: 5px; }
+        th { background: #444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎯 PUBG 测距 & 归零建议</h2>
+    
+    <div class="input-group">
+        <input type="number" id="inputX" placeholder="横向格数 (X)" step="0.1" oninput="calculate()">
+        <input type="number" id="inputY" placeholder="纵向格数 (Y)" step="0.1" oninput="calculate()">
+    </div>
+
+    <div id="result-box">
+        <div>直线距离: <span id="distOut" class="distance">-</span> 米</div>
+        <div id="zeroAdvice" class="advice">请输入格数开始计算...</div>
+    </div>
+
+    <p style="text-align: center; font-size: 14px; margin-top: 20px;">7x7 距离速查表 (m)</p>
+    <table id="distTable"></table>
+</div>
+
+<script>
+    // 生成表格
+    const table = document.getElementById('distTable');
+    let header = '<tr><th>Y\\X</th>';
+    for(let x=1; x<=7; x++) header += `<th>${x}格</th>`;
+    table.innerHTML = header + '</tr>';
+    
+    for(let y=1; y<=7; y++) {
+        let row = `<tr><td><b>${y}格</b></td>`;
+        for(let x=1; x<=7; x++) {
+            let d = Math.round(Math.sqrt(x*x + y*y) * 100);
+            row += `<td>${d}</td>`;
+        }
+        table.innerHTML += row + '</tr>';
+    }
+
+    // 计算逻辑
+    function calculate() {
+        const x = parseFloat(document.getElementById('inputX').value) || 0;
+        const y = parseFloat(document.getElementById('inputY').value) || 0;
+        const distOut = document.getElementById('distOut');
+        const zeroAdvice = document.getElementById('zeroAdvice');
+
+        if (x === 0 && y === 0) {
+            distOut.innerText = "-";
+            zeroAdvice.innerText = "请输入格数...";
+            return;
+        }
+
+        const dist = Math.sqrt(x*x + y*y) * 100;
+        const finalDist = Math.round(dist);
+        distOut.innerText = finalDist;
+
+        // 归零逻辑
+        let zeroValue = Math.round(finalDist / 100) * 100;
+        if (zeroValue < 100) zeroValue = 100;
+
+        let aimAdvice = "";
+        const diff = finalDist - zeroValue;
+
+        if (Math.abs(diff) < 5) {
+            aimAdvice = "准星**正对**目标。";
+        } else if (diff > 0) {
+            aimAdvice = `由于实际距离比归零远 ${diff}m，准星应**略微朝上**偏。`;
+        } else {
+            aimAdvice = `由于实际距离比归零近 ${Math.abs(diff)}m，准星应**略微朝下**偏。`;
+        }
+
+        zeroAdvice.innerHTML = `推荐归零: <strong>${zeroValue}m</strong><br>${aimAdvice}`;
+    }
+</script>
+
+</body>
+</html>
