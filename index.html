@@ -80,9 +80,9 @@
         if (Math.abs(diff) < 5) {
             aimAdvice = "准星**正对**目标。";
         } else if (diff > 0) {
-            aimAdvice = `由于实际距离比归零远 ${diff}m，准星应**略微朝上**偏。`;
+            aimAdvice = `由于实际距离比归零远 ${diff}m，准星应略微朝上偏。`;
         } else {
-            aimAdvice = `由于实际距离比归零近 ${Math.abs(diff)}m，准星应**略微朝下**偏。`;
+            aimAdvice = `由于实际距离比归零近 ${Math.abs(diff)}m，准星应略微朝下偏。`;
         }
 
         zeroAdvice.innerHTML = `推荐归零: <strong>${zeroValue}m</strong><br>${aimAdvice}`;
